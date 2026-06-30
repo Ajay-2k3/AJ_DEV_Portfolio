@@ -2,11 +2,11 @@ import { motion } from "framer-motion";
 import { SectionLabel } from "./SectionLabel";
 
 const achievements = [
-  { icon: "⚡", title: "35% faster API response", desc: "Architected 12+ RESTful endpoints with JWT auth, input validation, and error-handling middleware — cutting response time from 750ms → 490ms." },
-  { icon: "📡", title: "Real-time IoT at scale", desc: "Built a cross-platform React Native app managing live telemetry for 500+ street-light nodes across 5 municipal zones with multi-role RBAC." },
-  { icon: "🗄️", title: "40% query latency reduction", desc: "Optimised PostgreSQL + Supabase schemas via compound indexing and real-time subscriptions under concurrent load." },
-  { icon: "🔍", title: "Code quality enforcer", desc: "Reviewed 6 peer PRs, enforcing RESTful + OOP standards; diagnosed and resolved 8 production defects via log analysis." },
-  { icon: "🔄", title: "Agile delivery", desc: "Shipped features across 3 Agile sprint cycles — planning, retrospectives, requirements → tested release." },
+  { icon: "⚡", title: "35% Faster API Response", desc: "Designed 12+ RESTful endpoints with JWT auth, validation, and error-handling middleware — 750ms → 490ms." },
+  { icon: "📡", title: "IoT Telemetry at Scale", desc: "Deployed a React Native app managing real-time data for 500+ street-light nodes across 5 municipal zones." },
+  { icon: "🗄️", title: "40% Query Latency Reduction", desc: "Optimized PostgreSQL/Supabase schemas via compound indexing and real-time subscriptions." },
+  { icon: "🔍", title: "Production Defect Resolution", desc: "Reviewed 6 PRs enforcing clean-code standards; resolved 8 production defects via systematic log analysis." },
+  { icon: "🔄", title: "Agile Sprint Delivery", desc: "Delivered features across 3 sprint cycles — requirements gathering through tested release, SDLC-aligned." },
 ];
 
 export function Experience() {
@@ -18,17 +18,17 @@ export function Experience() {
           <div>
             <div className="sticky top-32">
               <div className="font-mono-accent text-xs tracking-wider text-[var(--accent-purple)] uppercase">
-                Apr 2025 — Aug 2025
+                Apr 2025 – Aug 2025
               </div>
               <h3 className="font-display mt-3 text-3xl leading-tight font-bold md:text-4xl">
-                Full Stack Developer Intern
+                Backend Developer Intern
               </h3>
               <div className="mt-2 text-lg text-foreground/80">
                 Bluewhiz Infotech Pvt. Ltd.
               </div>
               <div className="mt-1 font-mono-accent text-xs text-muted-foreground">Dindigul, India</div>
               <div className="mt-6 flex flex-wrap gap-2">
-                {["React Native", "Node.js", "PostgreSQL", "Supabase", "REST", "JWT", "RBAC", "Agile"].map((s) => (
+                {["React Native", "Node.js", "PostgreSQL", "Supabase", "REST APIs", "JWT", "RBAC", "Git", "Agile/Scrum"].map((s) => (
                   <span key={s} className="rounded-md border border-border bg-card px-2 py-1 font-mono-accent text-[10px] text-muted-foreground">
                     {s}
                   </span>

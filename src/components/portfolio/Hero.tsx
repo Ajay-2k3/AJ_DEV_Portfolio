@@ -1,19 +1,58 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useRef, useState, useContext } from "react";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import gsap from "gsap";
 import { ArrowDown, ArrowUpRight, Download } from "lucide-react";
+import { LoaderContext } from "@/routes/index";
 
 const roles = [
-  "Full Stack Software Engineer",
-  "React.js · Node.js · TypeScript",
-  "Building Scalable Web Systems",
+  "Full Stack Developer",
+  "Software Engineer",
+  "Freelance Developer"
 ];
+
+// Floating particle
+function HeroParticle({ i }: { i: number }) {
+  const size = 1 + (i % 3);
+  const left = `${5 + (i * 9.3) % 90}%`;
+  const top = `${10 + (i * 13.7) % 80}%`;
+  const delay = i * 0.5;
+  const dur = 4 + (i % 5) * 1.5;
+  return (
+    <motion.div
+      className="pointer-events-none absolute rounded-full"
+      style={{
+        width: size,
+        height: size,
+        left,
+        top,
+        background: i % 2 === 0 ? "var(--accent-purple)" : "var(--accent-cyan)",
+        opacity: 0.5,
+      }}
+      animate={{
+        y: [-8, -20, -8],
+        x: [-4, 4, -4],
+        opacity: [0.5, 0.2, 0.5],
+      }}
+      transition={{ duration: dur, delay, repeat: Infinity, ease: "easeInOut" }}
+    />
+  );
+}
 
 export function Hero() {
   const [roleIdx, setRoleIdx] = useState(0);
-  const orbRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
   const line1Ref = useRef<HTMLHeadingElement>(null);
   const line2Ref = useRef<HTMLHeadingElement>(null);
+
+  // Mouse spotlight
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 60, damping: 20 });
+  const springY = useSpring(mouseY, { stiffness: 60, damping: 20 });
+
+  // Parallax transforms for the glow orb
+  const orbX = useTransform(springX, [0, typeof window !== "undefined" ? window.innerWidth : 1440], [-60, 60]);
+  const orbY = useTransform(springY, [0, typeof window !== "undefined" ? window.innerHeight : 900], [-40, 40]);
 
   useEffect(() => {
     const t = setInterval(() => setRoleIdx((i) => (i + 1) % roles.length), 2800);
@@ -21,22 +60,19 @@ export function Hero() {
   }, []);
 
   useEffect(() => {
-    const orb = orbRef.current;
-    if (!orb) return;
-    const xTo = gsap.quickTo(orb, "x", { duration: 0.9, ease: "power3" });
-    const yTo = gsap.quickTo(orb, "y", { duration: 0.9, ease: "power3" });
-    const move = (e: MouseEvent) => {
-      xTo(e.clientX);
-      yTo(e.clientY);
+    const onMouseMove = (e: MouseEvent) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
     };
-    window.addEventListener("mousemove", move);
-    return () => window.removeEventListener("mousemove", move);
-  }, []);
+    window.addEventListener("mousemove", onMouseMove);
+    return () => window.removeEventListener("mousemove", onMouseMove);
+  }, [mouseX, mouseY]);
 
+  // GSAP word reveal
+  const { loaded } = useContext(LoaderContext);
   const splitDone = useRef(false);
   useEffect(() => {
-    // Guard against React StrictMode's double-invoke: splitting twice leaves
-    // words stuck at the gsap.from baseline (opacity 0, yPercent 110).
+    if (!loaded) return;
     if (splitDone.current) return;
     splitDone.current = true;
 
@@ -55,45 +91,90 @@ export function Hero() {
         return inner;
       });
     };
+
     const words = [
       ...split(line1Ref.current, false),
       ...split(line2Ref.current, true),
     ];
+
     gsap.fromTo(
       words,
       { yPercent: 110, opacity: 0 },
-      { yPercent: 0, opacity: 1, stagger: 0.08, ease: "power4.out", duration: 1, delay: 0.3 }
+      { yPercent: 0, opacity: 1, stagger: 0.08, ease: "power4.out", duration: 1, delay: 0.4 }
     );
-  }, []);
+  }, [loaded]);
 
   return (
     <section
       id="top"
+      ref={heroRef}
       className="relative flex min-h-screen items-center overflow-hidden"
+      aria-label="Hero section"
     >
+      {/* Animated grid background */}
       <div className="absolute inset-0 grid-bg opacity-60" />
-      <div
-        ref={orbRef}
-        className="pointer-events-none fixed top-0 left-0 -z-0 hidden h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.18),transparent_60%)] blur-3xl md:block"
+
+      {/* Animated gradient mesh */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <motion.div
+          className="absolute -top-1/4 -left-1/4 h-[700px] w-[700px] rounded-full opacity-20"
+          style={{
+            background: "radial-gradient(circle, rgba(124,58,237,0.6) 0%, transparent 70%)",
+            x: orbX,
+            y: orbY,
+            filter: "blur(80px)",
+          }}
+        />
+        <motion.div
+          className="absolute -bottom-1/4 -right-1/4 h-[500px] w-[500px] rounded-full opacity-15"
+          style={{
+            background: "radial-gradient(circle, rgba(6,182,212,0.5) 0%, transparent 70%)",
+            filter: "blur(80px)",
+          }}
+          animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.2, 0.15] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+
+      {/* Floating particles */}
+      <div className="pointer-events-none absolute inset-0">
+        {Array.from({ length: 15 }).map((_, i) => (
+          <HeroParticle key={i} i={i} />
+        ))}
+      </div>
+
+      {/* Cursor spotlight */}
+      <motion.div
+        className="pointer-events-none fixed inset-0 z-10 hidden md:block"
+        style={{
+          background: `radial-gradient(circle 400px at ${springX.get()}px ${springY.get()}px, rgba(124,58,237,0.05), transparent 70%)`,
+        }}
       />
+
       <div className="relative mx-auto w-full max-w-[1200px] px-6 pt-32 pb-24">
+        {/* Status badge */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.6 }}
-          className="mb-8 inline-flex items-center gap-3 rounded-full border border-border bg-card/50 px-4 py-1.5 font-mono-accent text-xs tracking-wider uppercase"
+          transition={{ delay: 0.15, duration: 0.6 }}
+          className="mb-8 inline-flex items-center gap-3 rounded-full border border-border bg-card/50 px-4 py-1.5 font-mono-accent text-xs tracking-wider uppercase backdrop-blur-sm"
         >
           <span className="relative inline-flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 pulse-dot" />
           </span>
-          Open to Opportunities · Chennai, IN
+          Fresher · Freelance Developer · Open to Full-Time Roles
         </motion.div>
 
-        <h1 className="font-display text-[clamp(3rem,10vw,9rem)] leading-[0.95] font-bold tracking-tight">
+        {/* Headline */}
+        <h1
+          className="font-display text-[clamp(3rem,10vw,9rem)] leading-[0.95] font-bold tracking-tight"
+          aria-label="Crafting Digital Experiences"
+        >
           <span ref={line1Ref} className="block">Crafting Digital</span>
           <span ref={line2Ref} className="block">Experiences.</span>
         </h1>
 
+        {/* Rotating role */}
         <div className="mt-10 flex h-8 items-center font-mono-accent text-sm text-muted-foreground md:text-base">
           <span className="mr-3 text-[var(--accent-purple)]">{">"}</span>
           <AnimatePresence mode="wait">
@@ -110,48 +191,59 @@ export function Hero() {
           <span className="ml-1 inline-block h-4 w-[2px] animate-pulse bg-[var(--accent-cyan)]" />
         </div>
 
+        {/* Description */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2, duration: 0.7 }}
+          transition={{ delay: 1.3, duration: 0.7 }}
           className="mt-8 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg"
         >
-          I architect and ship full-stack products — from real-time IoT dashboards to AI-powered stock platforms — with clean code and zero compromise.
+          I build production-grade web systems — from AI-powered prediction engines to multi-tenant e-commerce platforms — with clean architecture and measurable impact.
         </motion.p>
 
+        {/* CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.4, duration: 0.7 }}
+          transition={{ delay: 1.5, duration: 0.7 }}
           className="mt-10 flex flex-wrap gap-4"
         >
           <a
             href="#projects"
-            className="group inline-flex items-center gap-2 rounded-full bg-[var(--accent-purple)] px-6 py-3 text-sm font-medium text-white glow-purple transition-transform hover:scale-[1.03]"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-[var(--accent-purple)] px-7 py-3.5 text-sm font-semibold text-white glow-purple transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
           >
+            {/* Ripple overlay */}
+            <span className="absolute inset-0 -z-10 scale-0 rounded-full bg-white/20 transition-transform duration-500 group-active:scale-100" />
             View My Work
-            <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </a>
           <a
-            href="#contact"
-            className="group inline-flex items-center gap-2 rounded-full border border-border bg-transparent px-6 py-3 text-sm font-medium text-foreground transition-colors hover:border-[var(--accent-purple)]"
+            href="/resume.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center gap-2 rounded-full border border-border bg-transparent px-7 py-3.5 text-sm font-medium text-foreground transition-all duration-300 hover:border-[var(--accent-purple)] hover:bg-[var(--accent-purple)]/5"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
             Download Resume
           </a>
         </motion.div>
 
+        {/* Scroll indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
+          transition={{ delay: 2.2, duration: 0.8 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2"
         >
           <div className="flex flex-col items-center gap-2 font-mono-accent text-[10px] tracking-[0.3em] text-muted-foreground uppercase">
             scroll
             <motion.div
               animate={{ y: [0, 8, 0] }}
-              transition={{ repeat: Infinity, duration: 1.6 }}
+              transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
             >
               <ArrowDown className="h-4 w-4" />
             </motion.div>
