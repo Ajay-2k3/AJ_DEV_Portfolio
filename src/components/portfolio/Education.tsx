@@ -1,8 +1,8 @@
-import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { GraduationCap, Calendar, MapPin } from "lucide-react";
+import { GraduationCap, Calendar, MapPin, ChevronDown } from "lucide-react";
 import { SectionLabel } from "./SectionLabel";
 import { fadeUp, viewport } from "@/lib/motionVariants";
 
@@ -55,28 +55,75 @@ function CGPABar({ grade, color }: { grade: string; color: string }) {
   );
 }
 
+function CourseworkExpandable({ coursework }: { coursework: string[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-5 border-t border-border/40 pt-4">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 font-mono-accent text-[10px] tracking-wider text-muted-foreground uppercase hover:text-[var(--accent-cyan)] transition-colors focus:outline-none"
+      >
+        <span>{open ? "[-] Hide Coursework" : "[+] Show Relevant Coursework"}</span>
+        <ChevronDown className={`h-3 w-3 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {coursework.map((c) => (
+                <span
+                  key={c}
+                  className="rounded bg-[var(--bg-primary)] border border-border/40 px-2.5 py-1 font-mono-accent text-[10px] text-muted-foreground hover:border-[var(--accent-purple)]/40 hover:text-foreground transition-colors"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function Education() {
   const axisRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        axisRef.current,
-        { scaleY: 0 },
-        {
-          scaleY: 1,
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 70%",
-            end: "bottom 80%",
-            scrub: true,
-          },
-        }
-      );
-    }, sectionRef);
-    return () => ctx.revert();
+    let ctx: gsap.Context;
+
+    // Delay initialization until layout transitions settle (1000ms)
+    const timer = setTimeout(() => {
+      ctx = gsap.context(() => {
+        gsap.fromTo(
+          axisRef.current,
+          { scaleY: 0 },
+          {
+            scaleY: 1,
+            ease: "none",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top 70%",
+              end: "bottom 80%",
+              scrub: true,
+            },
+          }
+        );
+      }, sectionRef);
+      ScrollTrigger.refresh();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      if (ctx) ctx.revert();
+    };
   }, []);
 
   return (
@@ -181,22 +228,8 @@ export function Education() {
                         {/* CGPA bar */}
                         <CGPABar grade={n.grade} color={n.color} />
 
-                        {/* Coursework */}
-                        <div className="mt-5">
-                          <div className="mb-2 font-mono-accent text-[10px] tracking-wider text-muted-foreground uppercase">
-                            Relevant Coursework
-                          </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {n.coursework.map((c) => (
-                              <span
-                                key={c}
-                                className="rounded-md border border-border bg-[var(--bg-primary)] px-2 py-0.5 font-mono-accent text-[10px] text-muted-foreground"
-                              >
-                                {c}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
+                        {/* Coursework Expandable */}
+                        <CourseworkExpandable coursework={n.coursework} />
                       </div>
                     </motion.div>
                   </div>

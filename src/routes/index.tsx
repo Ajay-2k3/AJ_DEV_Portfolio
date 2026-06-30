@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Toaster } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/portfolio/Navbar";
 import { Hero } from "@/components/portfolio/Hero";
 import { About } from "@/components/portfolio/About";
@@ -15,6 +16,8 @@ import { Cursor } from "@/components/portfolio/Cursor";
 import { PageLoader } from "@/components/portfolio/PageLoader";
 import { ScrollProgress } from "@/components/portfolio/ScrollProgress";
 import { useLenis, getLenis } from "@/hooks/useLenis";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 export const LoaderContext = createContext({ loaded: false });
 
@@ -71,9 +74,18 @@ function Index() {
       const lenis = getLenis();
       if (lenis) lenis.stop();
     } else {
-      document.body.style.overflow = "";
-      const lenis = getLenis();
-      if (lenis) lenis.start();
+      // Delay enabling scroll until the page scale-in animation completes (0.85s)
+      const timer = setTimeout(() => {
+        document.body.style.overflow = "";
+        const lenis = getLenis();
+        if (lenis) {
+          lenis.start();
+          lenis.resize(); // Re-measure scroll container height
+        }
+        ScrollTrigger.refresh(); // Refresh triggers
+      }, 1000);
+
+      return () => clearTimeout(timer);
     }
     return () => {
       document.body.style.overflow = "";
@@ -84,17 +96,19 @@ function Index() {
     <LoaderContext.Provider value={{ loaded }}>
       {loaded && <Cursor />}
       <PageLoader onComplete={() => setLoaded(true)} />
-      <div
-        className="transition-all duration-1200 ease-[cubic-bezier(0.16,1,0.3,1)]"
-        style={{
-          opacity: loaded ? 1 : 0,
-          transform: loaded ? "scale(1)" : "scale(0.985)",
-          filter: loaded ? "blur(0px)" : "blur(10px)",
-          visibility: loaded ? "visible" : "hidden",
-        }}
-      >
-        <PortfolioApp />
-      </div>
+      <AnimatePresence mode="wait">
+        {loaded && (
+          <motion.div
+            key="portfolio-app-root"
+            initial={{ opacity: 0, scale: 0.985, filter: "blur(10px)", y: 15 }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)", y: 0 }}
+            exit={{ opacity: 0, scale: 0.985, filter: "blur(10px)", y: -15 }}
+            transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <PortfolioApp />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </LoaderContext.Provider>
   );
 }

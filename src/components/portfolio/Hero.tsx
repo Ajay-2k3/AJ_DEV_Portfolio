@@ -1,14 +1,98 @@
 import { useEffect, useRef, useState, useContext } from "react";
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform, useScroll, useMotionTemplate } from "framer-motion";
 import gsap from "gsap";
 import { ArrowDown, ArrowUpRight, Download } from "lucide-react";
 import { LoaderContext } from "@/routes/index";
+import { Magnetic } from "@/components/ui/Magnetic";
 
 const roles = [
   "Full Stack Developer",
   "Software Engineer",
   "Freelance Developer"
 ];
+
+const autoKeywords = [
+  "Experiences.",
+  "for Startups.",
+  "for Creators.",
+  "for Businesses.",
+  "for Developers.",
+  "for Founders.",
+  "for AI Products.",
+  "for the Future."
+];
+
+const scrollKeywords = [
+  "Innovative.",
+  "Scalable.",
+  "Creative.",
+  "Reliable.",
+  "AI-Powered.",
+  "Future-Ready.",
+  "Full-Stack.",
+  "High-Performance."
+];
+
+// Character morphing component
+function MorphText({ word }: { word: string }) {
+  const characters = Array.from(word);
+  return (
+    <AnimatePresence mode="popLayout">
+      <motion.span
+        key={word}
+        className="inline-flex flex-wrap"
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        variants={{
+          hidden: { transition: { staggerChildren: 0.015 } },
+          visible: { transition: { staggerChildren: 0.02 } },
+          exit: { transition: { staggerChildren: 0.01, staggerDirection: -1 } }
+        }}
+      >
+        {characters.map((char, index) => (
+          <motion.span
+            key={`${word}-${index}-${char}`}
+            variants={{
+              hidden: {
+                opacity: 0,
+                y: 35,
+                scale: 0.8,
+                filter: "blur(6px)",
+                rotateX: -30,
+              },
+              visible: {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                filter: "blur(0px)",
+                rotateX: 0,
+                transition: {
+                  duration: 0.55,
+                  ease: [0.16, 1, 0.3, 1]
+                }
+              },
+              exit: {
+                opacity: 0,
+                y: -25,
+                scale: 0.9,
+                filter: "blur(4px)",
+                rotateX: 30,
+                transition: {
+                  duration: 0.35,
+                  ease: [0.16, 1, 0.3, 1]
+                }
+              }
+            }}
+            className="inline-block origin-center tracking-tight text-gradient-purple"
+          >
+            {char === " " ? "\u00A0" : char}
+          </motion.span>
+        ))}
+      </motion.span>
+    </AnimatePresence>
+  );
+}
 
 // Floating particle
 function HeroParticle({ i }: { i: number }) {
@@ -42,7 +126,18 @@ export function Hero() {
   const [roleIdx, setRoleIdx] = useState(0);
   const heroRef = useRef<HTMLElement>(null);
   const line1Ref = useRef<HTMLHeadingElement>(null);
-  const line2Ref = useRef<HTMLHeadingElement>(null);
+  const line2Ref = useRef<HTMLSpanElement>(null);
+
+  // Scroll bindings
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+
+  const keywordIndex = useTransform(scrollYProgress, [0, 0.85], [0, scrollKeywords.length - 1]);
+  const [scrollIdx, setScrollIdx] = useState(0);
+  const [autoIdx, setAutoIdx] = useState(0);
+  const [useScrollControl, setUseScrollControl] = useState(false);
 
   // Mouse spotlight
   const mouseX = useMotionValue(0);
@@ -50,13 +145,20 @@ export function Hero() {
   const springX = useSpring(mouseX, { stiffness: 60, damping: 20 });
   const springY = useSpring(mouseY, { stiffness: 60, damping: 20 });
 
+  // Spotlight templates for hardware acceleration
+  const spotlightGradient = useMotionTemplate`radial-gradient(circle 450px at ${springX}px ${springY}px, rgba(124,58,237,0.06), transparent 70%)`;
+
   // Parallax transforms for the glow orb
   const orbX = useTransform(springX, [0, typeof window !== "undefined" ? window.innerWidth : 1440], [-60, 60]);
   const orbY = useTransform(springY, [0, typeof window !== "undefined" ? window.innerHeight : 900], [-40, 40]);
 
   useEffect(() => {
     const t = setInterval(() => setRoleIdx((i) => (i + 1) % roles.length), 2800);
-    return () => clearInterval(t);
+    const t2 = setInterval(() => setAutoIdx((i) => (i + 1) % autoKeywords.length), 3200);
+    return () => {
+      clearInterval(t);
+      clearInterval(t2);
+    };
   }, []);
 
   useEffect(() => {
@@ -64,11 +166,27 @@ export function Hero() {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
     };
-    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", onMouseMove);
   }, [mouseX, mouseY]);
 
-  // GSAP word reveal
+  // Sync scroll values
+  useEffect(() => {
+    const unsubscribeIndex = keywordIndex.on("change", (latest) => {
+      const idx = Math.min(scrollKeywords.length - 1, Math.max(0, Math.round(latest)));
+      setScrollIdx((prev) => (prev !== idx ? idx : prev));
+    });
+    const unsubscribeScroll = scrollYProgress.on("change", (latest) => {
+      const isControl = latest > 0.05;
+      setUseScrollControl((prev) => (prev !== isControl ? isControl : prev));
+    });
+    return () => {
+      unsubscribeIndex();
+      unsubscribeScroll();
+    };
+  }, [keywordIndex, scrollYProgress]);
+
+  // GSAP word reveal on load
   const { loaded } = useContext(LoaderContext);
   const splitDone = useRef(false);
   useEffect(() => {
@@ -76,7 +194,7 @@ export function Hero() {
     if (splitDone.current) return;
     splitDone.current = true;
 
-    const split = (el: HTMLElement | null, gradient = false) => {
+    const split = (el: HTMLElement | null) => {
       if (!el) return [];
       const text = el.textContent || "";
       el.innerHTML = "";
@@ -84,7 +202,7 @@ export function Hero() {
         const wrap = document.createElement("span");
         wrap.className = "inline-block overflow-hidden align-bottom mr-[0.25em] pb-[0.05em]";
         const inner = document.createElement("span");
-        inner.className = gradient ? "inline-block text-gradient-purple" : "inline-block";
+        inner.className = "inline-block";
         inner.textContent = word;
         wrap.appendChild(inner);
         el.appendChild(wrap);
@@ -92,10 +210,7 @@ export function Hero() {
       });
     };
 
-    const words = [
-      ...split(line1Ref.current, false),
-      ...split(line2Ref.current, true),
-    ];
+    const words = split(line1Ref.current);
 
     gsap.fromTo(
       words,
@@ -103,6 +218,7 @@ export function Hero() {
       { yPercent: 0, opacity: 1, stagger: 0.08, ease: "power4.out", duration: 1, delay: 0.4 }
     );
   }, [loaded]);
+  const currentWord = useScrollControl ? scrollKeywords[scrollIdx] : autoKeywords[autoIdx];
 
   return (
     <section
@@ -113,6 +229,7 @@ export function Hero() {
     >
       {/* Animated grid background */}
       <div className="absolute inset-0 grid-bg opacity-60" />
+      <div className="absolute inset-0 noise-bg" />
 
       {/* Animated gradient mesh */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -147,31 +264,40 @@ export function Hero() {
       <motion.div
         className="pointer-events-none fixed inset-0 z-10 hidden md:block"
         style={{
-          background: `radial-gradient(circle 400px at ${springX.get()}px ${springY.get()}px, rgba(124,58,237,0.05), transparent 70%)`,
+          background: spotlightGradient,
         }}
       />
 
       <div className="relative mx-auto w-full max-w-[1200px] px-6 pt-32 pb-24">
         {/* Status badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.6 }}
-          className="mb-8 inline-flex items-center gap-3 rounded-full border border-border bg-card/50 px-4 py-1.5 font-mono-accent text-xs tracking-wider uppercase backdrop-blur-sm"
-        >
-          <span className="relative inline-flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 pulse-dot" />
-          </span>
-          Fresher · Freelance Developer · Open to Full-Time Roles
-        </motion.div>
+        <Magnetic range={30} strength={0.15}>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.6 }}
+            data-magnetic
+            className="mb-8 inline-flex items-center gap-3 rounded-full border border-border bg-card/50 px-4 py-1.5 font-mono-accent text-xs tracking-wider uppercase backdrop-blur-sm"
+          >
+            <span className="relative inline-flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 pulse-dot" />
+            </span>
+            Fresher · Freelance Developer · Open to Full-Time Roles
+          </motion.div>
+        </Magnetic>
 
         {/* Headline */}
         <h1
-          className="font-display text-[clamp(3rem,10vw,9rem)] leading-[0.95] font-bold tracking-tight"
+          className="font-display text-[clamp(2.8rem,8.5vw,7.8rem)] leading-[0.95] font-bold tracking-tight"
           aria-label="Crafting Digital Experiences"
         >
           <span ref={line1Ref} className="block">Crafting Digital</span>
-          <span ref={line2Ref} className="block">Experiences.</span>
+          <span className="block mt-2 min-h-[1.1em] overflow-hidden">
+            {loaded ? (
+              <MorphText word={currentWord} />
+            ) : (
+              <span ref={line2Ref} className="text-gradient-purple">Experiences.</span>
+            )}
+          </span>
         </h1>
 
         {/* Rotating role */}
@@ -208,28 +334,35 @@ export function Hero() {
           transition={{ delay: 1.5, duration: 0.7 }}
           className="mt-10 flex flex-wrap gap-4"
         >
-          <a
-            href="#projects"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-[var(--accent-purple)] px-7 py-3.5 text-sm font-semibold text-white glow-purple transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
-          >
-            {/* Ripple overlay */}
-            <span className="absolute inset-0 -z-10 scale-0 rounded-full bg-white/20 transition-transform duration-500 group-active:scale-100" />
-            View My Work
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </a>
-          <a
-            href="/resume.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 rounded-full border border-border bg-transparent px-7 py-3.5 text-sm font-medium text-foreground transition-all duration-300 hover:border-[var(--accent-purple)] hover:bg-[var(--accent-purple)]/5"
-          >
-            <Download className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
-            Download Resume
-          </a>
+          <Magnetic range={45} strength={0.25}>
+            <a
+              href="#projects"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById("projects")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              data-magnetic
+              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-[var(--accent-purple)] px-7 py-3.5 text-sm font-semibold text-white glow-purple transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
+            >
+              {/* Ripple overlay */}
+              <span className="absolute inset-0 -z-10 scale-0 rounded-full bg-white/20 transition-transform duration-500 group-active:scale-100" />
+              View My Work
+              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </a>
+          </Magnetic>
+          
+          <Magnetic range={45} strength={0.25}>
+            <a
+              href="/resume.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-magnetic
+              className="group inline-flex items-center gap-2 rounded-full border border-border bg-transparent px-7 py-3.5 text-sm font-medium text-foreground transition-all duration-300 hover:border-[var(--accent-purple)] hover:bg-[var(--accent-purple)]/5"
+            >
+              <Download className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
+              Download Resume
+            </a>
+          </Magnetic>
         </motion.div>
 
         {/* Scroll indicator */}

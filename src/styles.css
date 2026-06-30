@@ -129,6 +129,11 @@
   background-size: 60px 60px;
 }
 
+@utility noise-bg {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.02;
+}
+
 @utility glass-nav {
   background: rgba(5, 5, 5, 0.8);
   backdrop-filter: blur(16px) saturate(160%);
@@ -192,6 +197,63 @@
   position: relative;
   overflow: hidden;
 }
+.shimmer-sweep::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes moving-grid {
+  0% { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+@utility grid-bg-moving {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: moving-grid 16s linear infinite;
+}
+
+@keyframes liquid-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@utility liquid-progress {
+  background: linear-gradient(270deg, var(--accent-purple), var(--accent-cyan), var(--accent-glow), var(--accent-purple));
+  background-size: 300% 300%;
+  animation: liquid-flow 4s ease infinite;
+}
+
+@keyframes draw-path {
+  to { stroke-dashoffset: 0; }
+}
+.animate-draw {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw-path 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes aurora-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+@utility aurora-orb {
+  animation: aurora-spin 20s linear infinite;
+}
+
+.text-stroke-number {
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.08);
+  color: transparent;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -205,4 +267,5 @@
   display: inline-block;
   margin-right: 0.28em;
 }
+
 

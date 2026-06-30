@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowUp, Github, Linkedin, Mail } from "lucide-react";
+import { Magnetic } from "@/components/ui/Magnetic";
 
 const marqueeItems = [
   "Full Stack Developer",
@@ -44,7 +45,7 @@ export function Footer() {
         {/* Left: copyright + availability */}
         <div className="flex flex-col items-center gap-3 md:items-start">
           <div className="font-mono-accent text-xs text-muted-foreground">
-            © 2025 Ajay S. All rights reserved.
+            © {year} Ajay S. All rights reserved.
           </div>
           {/* Availability status */}
           <div className="flex items-center gap-2 rounded-full border border-green-500/20 bg-green-500/8 px-3 py-1">
@@ -61,39 +62,44 @@ export function Footer() {
         {/* Right: social icons + back-to-top */}
         <div className="flex items-center gap-5">
           {socials.map((s) => (
-            <motion.a
-              key={s.label}
-              href={s.href}
-              whileHover={{ y: -3, scale: 1.15 }}
-              whileTap={{ scale: 0.9 }}
-              target={s.href.startsWith("mailto") ? undefined : "_blank"}
-              rel={s.href.startsWith("mailto") ? undefined : "noopener noreferrer"}
-              className="text-muted-foreground transition-colors hover:text-[var(--accent-glow)]"
-              aria-label={s.label}
-            >
-              <s.Icon className="h-4 w-4" />
-            </motion.a>
+            <Magnetic key={s.label} range={35} strength={0.35}>
+              <motion.a
+                href={s.href}
+                data-magnetic
+                whileHover={{ y: -3, scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+                target={s.href.startsWith("mailto") ? undefined : "_blank"}
+                rel={s.href.startsWith("mailto") ? undefined : "noopener noreferrer"}
+                className="text-muted-foreground transition-colors hover:text-[var(--accent-glow)] flex h-8 w-8 items-center justify-center rounded-full"
+                aria-label={s.label}
+              >
+                <s.Icon className="h-4 w-4" />
+              </motion.a>
+            </Magnetic>
           ))}
 
           {/* Gradient divider */}
           <div className="h-4 w-px bg-border" aria-hidden="true" />
 
           {/* Back to top */}
-          <motion.button
-            onClick={scrollTop}
-            whileHover={{ y: -3, scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="group inline-flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 font-mono-accent text-xs text-foreground transition-all duration-300 hover:border-[var(--accent-purple)] hover:text-[var(--accent-purple)]"
-            aria-label="Back to top of page"
-          >
-            Back to Top
-            <motion.span
-              animate={{ y: [0, -2, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+          <Magnetic range={40} strength={0.25}>
+            <motion.button
+              onClick={scrollTop}
+              data-magnetic
+              whileHover={{ y: -3, scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="group inline-flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 font-mono-accent text-xs text-foreground transition-all duration-300 hover:border-[var(--accent-purple)] hover:text-[var(--accent-purple)]"
+              aria-label="Back to top of page"
             >
-              <ArrowUp className="h-3 w-3" />
-            </motion.span>
-          </motion.button>
+              Back to Top
+              <motion.span
+                animate={{ y: [0, -2, 0] }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+              >
+                <ArrowUp className="h-3 w-3" />
+              </motion.span>
+            </motion.button>
+          </Magnetic>
         </div>
       </div>
     </footer>

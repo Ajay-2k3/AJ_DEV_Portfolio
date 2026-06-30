@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { LoaderContext } from "@/routes/index";
+import { Magnetic } from "@/components/ui/Magnetic";
 
 const links = [
   { label: "About", href: "#about" },
@@ -48,7 +49,7 @@ export function Navbar() {
           }
         });
       },
-      { rootMargin: "-30% 0px -65% 0px", threshold: 0 }
+      { rootMargin: "-35% 0px -55% 0px", threshold: 0 }
     );
     sectionIds.forEach((id) => {
       const el = document.getElementById(id);
@@ -91,36 +92,44 @@ export function Navbar() {
             {links.map((l) => {
               const isActive = activeSection === l.href.replace("#", "");
               return (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  onClick={(e) => { e.preventDefault(); handleNavClick(l.href); }}
-                  role="menuitem"
-                  className="group relative font-mono-accent text-xs tracking-wider uppercase transition-colors duration-300"
-                  style={{ color: isActive ? "var(--text-primary)" : "var(--text-muted)" }}
-                >
-                  {l.label}
-                  {/* Animated underline */}
-                  <span
-                    className="absolute -bottom-1 left-0 h-px bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-cyan)] transition-all duration-500"
-                    style={{ width: isActive ? "100%" : "0%", opacity: isActive ? 1 : 0 }}
-                  />
-                  <span className="absolute -bottom-1 left-0 h-px w-full origin-right scale-x-0 bg-[var(--accent-purple)] transition-transform duration-500 group-hover:origin-left group-hover:scale-x-100" />
-                </a>
+                <Magnetic key={l.href} range={35} strength={0.3}>
+                  <a
+                    href={l.href}
+                    onClick={(e) => { e.preventDefault(); handleNavClick(l.href); }}
+                    role="menuitem"
+                    data-magnetic
+                    className="group relative px-2 py-1 font-mono-accent text-xs tracking-wider uppercase transition-colors duration-300"
+                    style={{ color: isActive ? "var(--text-primary)" : "var(--text-muted)" }}
+                  >
+                    {l.label}
+                    {/* Animated sliding underline */}
+                    {isActive && (
+                      <motion.span
+                        layoutId="active-nav-underline"
+                        className="absolute -bottom-1.5 left-0 h-[2px] w-full bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-cyan)]"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <span className="absolute -bottom-1.5 left-0 h-[2px] w-full origin-right scale-x-0 bg-[var(--accent-purple)]/50 transition-transform duration-500 group-hover:origin-left group-hover:scale-x-100" />
+                  </a>
+                </Magnetic>
               );
             })}
           </div>
 
           {/* CTA + Mobile toggle */}
           <div className="flex items-center gap-4">
-            <a
-              href="#contact"
-              onClick={(e) => { e.preventDefault(); handleNavClick("#contact"); }}
-              className="group relative hidden overflow-hidden rounded-full border border-[var(--accent-purple)] px-5 py-2 text-xs font-medium tracking-wider uppercase transition-colors hover:text-white md:inline-flex items-center gap-2"
-            >
-              <span className="absolute inset-0 -z-10 translate-y-full bg-[var(--accent-purple)] transition-transform duration-400 group-hover:translate-y-0" />
-              Hire Me
-            </a>
+            <Magnetic range={40} strength={0.25}>
+              <a
+                href="#contact"
+                onClick={(e) => { e.preventDefault(); handleNavClick("#contact"); }}
+                data-magnetic
+                className="group relative hidden overflow-hidden rounded-full border border-[var(--accent-purple)] px-5 py-2 text-xs font-medium tracking-wider uppercase transition-colors hover:text-white md:inline-flex items-center gap-2"
+              >
+                <span className="absolute inset-0 -z-10 translate-y-full bg-[var(--accent-purple)] transition-transform duration-400 group-hover:translate-y-0" />
+                Hire Me
+              </a>
+            </Magnetic>
 
             {/* Mobile hamburger */}
             <button
