@@ -326,7 +326,7 @@ export function About() {
               {/* Resume download */}
               <Magnetic range={35} strength={0.2}>
                 <a
-                  href="/resume.pdf"
+                  href="/Ajay_S_Resume.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   data-magnetic

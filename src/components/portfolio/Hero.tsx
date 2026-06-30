@@ -353,7 +353,7 @@ export function Hero() {
           
           <Magnetic range={45} strength={0.25}>
             <a
-              href="/resume.pdf"
+              href="/Ajay_S_Resume.pdf"
               target="_blank"
               rel="noopener noreferrer"
               data-magnetic

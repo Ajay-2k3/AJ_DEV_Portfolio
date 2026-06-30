@@ -37,24 +37,23 @@ function Field({
   const active = focus || value.length > 0;
   const baseCls =
     "peer w-full resize-none border-0 border-b bg-transparent py-3 text-base text-foreground outline-none transition-all duration-300 placeholder-transparent";
-  
+
   const borderCls = error
     ? "border-red-500/60"
     : focus
-    ? "border-[var(--accent-purple)]"
-    : "border-border";
+      ? "border-[var(--accent-purple)]"
+      : "border-border";
 
   return (
-    <motion.div 
+    <motion.div
       variants={fieldVariants}
       animate={error ? "error" : "normal"}
       className="group relative"
     >
       <label
         htmlFor={id}
-        className={`pointer-events-none absolute left-0 origin-left font-mono-accent text-xs tracking-wider uppercase transition-all duration-300 ${
-          active ? "-top-1.5 scale-90 text-[var(--accent-purple)]" : "top-3 text-muted-foreground"
-        } ${error ? "text-red-400" : ""}`}
+        className={`pointer-events-none absolute left-0 origin-left font-mono-accent text-xs tracking-wider uppercase transition-all duration-300 ${active ? "-top-1.5 scale-90 text-[var(--accent-purple)]" : "top-3 text-muted-foreground"
+          } ${error ? "text-red-400" : ""}`}
       >
         {label}
       </label>
@@ -85,7 +84,7 @@ function Field({
           aria-describedby={error ? `${id}-error` : undefined}
         />
       )}
-      
+
       {/* Animated underline glow */}
       <div
         className="absolute bottom-0 left-0 h-px w-full origin-left scale-x-0 bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-cyan)] transition-transform duration-500"
@@ -148,7 +147,7 @@ export function Contact() {
     setSubmitting(false);
     setSent(true);
     toast.success("Message compiled! Redirecting to mail client...", { duration: 4000 });
-    
+
     setTimeout(() => {
       window.location.href = `mailto:${EMAIL}?subject=Portfolio Inquiry from ${form.name}&body=${encodeURIComponent(form.message)}`;
     }, 800);
@@ -214,11 +213,10 @@ export function Contact() {
                 disabled={submitting || sent}
                 whileHover={!submitting && !sent ? { scale: 1.02 } : {}}
                 whileTap={!submitting && !sent ? { scale: 0.98 } : {}}
-                className={`relative flex items-center justify-center font-semibold text-white glow-purple transition-all duration-500 ease-out bg-[var(--accent-purple)] ${
-                  submitting || sent
+                className={`relative flex items-center justify-center font-semibold text-white glow-purple transition-all duration-500 ease-out bg-[var(--accent-purple)] ${submitting || sent
                     ? "h-14 w-14 rounded-full p-0"
                     : "h-14 w-full rounded-full px-8"
-                }`}
+                  }`}
                 aria-label={sent ? "Message sent" : submitting ? "Sending message" : "Send message"}
               >
                 <AnimatePresence mode="wait">
@@ -274,11 +272,6 @@ export function Contact() {
                   </AnimatePresence>
                   {copied ? "Copied!" : "Copy"}
                 </motion.button>
-              </div>
-
-              <div className="flex items-center gap-3 text-foreground/90 border border-border/40 bg-card/30 p-3 rounded-xl">
-                <Phone className="h-4.5 w-4.5 shrink-0 text-[var(--accent-purple)]" />
-                <span className="text-sm font-medium">+91-9344170591</span>
               </div>
 
               <div className="flex items-center gap-3 text-foreground/90 border border-border/40 bg-card/30 p-3 rounded-xl">
